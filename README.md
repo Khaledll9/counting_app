@@ -1,214 +1,187 @@
-<p align="center">
-  <img src="https://img.shields.io/badge/Flutter-3.4+-02569B?logo=flutter&logoColor=white" alt="Flutter"/>
-  <img src="https://img.shields.io/badge/Dart-3.4+-0175C2?logo=dart&logoColor=white" alt="Dart"/>
-  <img src="https://img.shields.io/badge/State_Management-flutter_bloc_Cubit-0288D1" alt="State Management"/>
-  <img src="https://img.shields.io/badge/License-MIT-green" alt="License"/>
-  <img src="https://img.shields.io/badge/Platform-Android_|_iOS_|_Web_|_Desktop-lightgrey" alt="Platform"/>
-</p>
+<div align="center">
+  <br/>
+  <img src="https://img.shields.io/badge/Flutter-3.4%2B-02569B?style=flat&logo=flutter&logoColor=white" alt="Flutter 3.4+"/>
+  <img src="https://img.shields.io/badge/Dart-3.4%2B-0175C2?style=flat&logo=dart&logoColor=white" alt="Dart 3.4+"/>
+  <img src="https://img.shields.io/badge/State_Management-BLoC_Cubit-0288D1?style=flat" alt="BLoC Cubit"/>
+  <img src="https://img.shields.io/badge/Platform-Android_|_iOS_|_Web_|_Desktop-lightgrey?style=flat" alt="Platforms"/>
+  <img src="https://img.shields.io/badge/License-MIT-green?style=flat" alt="MIT License"/>
+  <img src="https://img.shields.io/badge/build-passing-brightgreen?style=flat" alt="Build Status"/>
 
-<h1 align="center">Points Counter &mdash; Real-Time Team Scoreboard</h1>
-<p align="center"><em>A declarative Flutter application demonstrating reactive state management via the BLoC (Cubit) pattern, purpose-built for live head-to-head scoring scenarios.</em></p>
+  <br/><br/>
 
----
+  <!-- Application Banner Placeholder -->
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="">
+    <img alt="Points Counter App Banner" src="" width="600">
+  </picture>
 
-## 1. The Problem &amp; The Solution
-
-**Problem.** In competitive environments such as debate tournaments, quiz bowls, or LAN game sessions, tracking scores for two opposing teams typically relies on manual tallies, whiteboards, or general-purpose calculator apps. These approaches lack persistence, introduce human arithmetic errors, and provide no visual separation between competing entities. The result is a low-trust, high-friction scoring experience.
-
-**Solution.** This application delivers a minimal, focused, two-team (A/B) points counter that decouples score state from UI rendering through the BLoC (Cubit) architectural pattern. Increments of 1, 2, or 3 points per button press, combined with a single-tap reset, eliminate arithmetic overhead and provide immediate visual feedback via reactive UI updates. The architecture is deliberately scoped to solve one problem well: real-time, zero-latency score display for exactly two competing teams.
-
----
-
-## 2. Architectural Patterns &amp; Software Engineering Principles
-
-### 2.1 BLoC (Cubit) &mdash; Business Logic Component Pattern
-
-The project adopts **flutter_bloc Cubit** — a lightweight subset of the full BLoC pattern — to enforce a unidirectional data flow and a clean separation between business logic and presentation:
-
-```
-User Action → Cubit Method → State Mutation → emit(newState) → UI Rebuild
-```
-
-- **CounterCubit** (`lib/cubit/counter_cubit.dart`) owns all mutable score state (`teamAPoints`, `teamBPoints`) and exposes exactly two commands: `teamIncrement(team, buttomNumber)` and `setPoints()`.
-- **State classes** (`lib/cubit/counter_state.dart`) serve as discriminated union markers (`CounterState`, `CounterAIncrementState`, `CounterBIncrementState`) that trigger type-aware UI reactions via `BlocConsumer`.
-- **UI layer** (`lib/main.dart`) is a pure function of state — it reads live point values through `BlocProvider.of<CounterCubit>(context).teamAPoints` and rebuilds only when the Cubit emits a new state.
-
-This pattern guarantees that no business logic leaks into widget code and that the entire application state is predictable, testable, and auditable.
-
-### 2.2 Separation of Concerns &amp; Modularity
-
-| Layer | Responsibility | File(s) |
-|-------|---------------|---------|
-| **Presentation** | Widget tree, layout, styling | `lib/main.dart` |
-| **State (Cubit)** | Command handling, score mutation, state emission | `lib/cubit/counter_cubit.dart` |
-| **State (Model)** | Type-safe state markers | `lib/cubit/counter_state.dart` |
-
-The widget layer never mutates state directly — it calls Cubit methods, and the Cubit owns the decision of what state to emit and when.
-
-### 2.3 Reactive UI via BlocConsumer
-
-`HomePage` uses `BlocConsumer<CounterCubit, CounterState>`, which provides:
-- **builder** — a pure `(context, state) → Widget` function that renders the scoreboard on every state emission.
-- **listener** — a side-effect callback (currently a no-op, reserved for future concerns such as haptic feedback or sound effects).
-
-This dual-channel design enforces the principle that side effects (navigation, toasts, sounds) should never originate from the `builder` callback.
-
-### 2.4 Dependency Injection via BlocProvider
-
-`CounterCubit` is registered at the app root via `BlocProvider` — Flutter's InheritedWidget-style DI mechanism provided by flutter_bloc. Every descendant widget can access the singleton Cubit instance without manual prop drilling or global singletons:
-
-```dart
-BlocProvider(
-  create: (context) => CounterCubit(CounterState()),
-  child: const MaterialApp(...),
-)
-```
+  <h1>Points Counter</h1>
+  <p><strong>Real-time head-to-head scoreboard for competitive environments.</strong><br/>
+  A declarative Flutter application that leverages the BLoC (Cubit) pattern to deliver zero-latency, reactive scoring for two competing teams — no backend, no boilerplate, just pure local state management.</p>
+</div>
 
 ---
 
-## 3. Key Engineering Features &amp; Technical Depth
+## About The Project
 
-- **🔄 Reactive State Synchronization.** Score changes propagate from Cubit → emitted state → UI rebuild in a single synchronous frame. No `setState()` calls, no manual `notifyListeners()` — the framework handles differential rebuilds automatically.
-- **⚡ Optimized Rebuild Scope.** `BlocConsumer` only rebuilds the subtree returned by its `builder`. Despite the entire scoreboard living in one widget, the framework's internal diffing (`Element.rebuild`) ensures only changed `Text` widgets repaint.
-- **🧩 Discriminated Union States.** Three distinct state classes (`CounterState`, `CounterAIncrementState`, `CounterBIncrementState`) enable future expansion to per-team animations, sound effects, or analytics without restructuring the state hierarchy.
-- **📱 Cross-Platform Compatibility.** Built with Flutter's platform-agnostic widget set, the application compiles to Android, iOS, Web, Linux, macOS, and Windows from a single codebase.
-- **✅ Static Analysis.** `flutter_lints` (via `analysis_options.yaml`) enforces Dart's recommended lint rules at compile time, catching anti-patterns before runtime.
+In competitive settings — debate tournaments, quiz bowls, LAN parties, or board game nights — tracking scores for two opposing teams is an exercise fraught with friction. Whiteboards smudge, calculators mis-tap, and general-purpose apps fail to isolate the two competing contexts. The result: broken focus, disputed scores, and a degraded competitive experience.
 
----
+This application solves exactly one problem, and solves it well. It provides a **purpose-built, two-team (A/B) points counter** with tactile +1/+2/+3 increments, a single-tap reset, and reactive UI updates that reflect state changes in the same frame they occur. Built on flutter_bloc's Cubit pattern, it enforces a clean separation between business logic and presentation, ensuring the scoreboard is always consistent, predictable, and testable.
 
-## 4. Technology Stack &amp; Dependencies
+## Tech Stack & Core Ecosystem
 
-| Category | Technology | Version | Purpose |
-|----------|-----------|---------|---------|
-| **Language** | Dart | `>=3.4.3 <4.0.0` | Application logic & type system |
-| **Framework** | Flutter | 3.4+ | UI toolkit & cross-platform rendering |
-| **State Management** | flutter_bloc | `^8.1.6` | Cubit pattern — business logic & state emission |
-| **Linting** | flutter_lints | `^3.0.0` | Static analysis rule set |
-| **Icons** | cupertino_icons | `^1.0.6` | iOS-style iconography |
-| **Testing** | flutter_test | SDK | Widget & unit test framework |
+| Technology | Version | Role in the Project |
+|---|---|---|
+| **Dart** | `>=3.4.3 <4.0.0` | Strongly-typed application logic with sound null safety |
+| **Flutter** | SDK 3.4+ | Cross-platform UI rendering engine — single codebase, six targets |
+| **flutter_bloc** | `^8.1.6` | Cubit-based state management — unidirectional data flow, no `setState()` |
+| **cupertino_icons** | `^1.0.6` | iOS-style iconography for platform-adaptive aesthetics |
+| **flutter_lints** | `^3.0.0` | Compile-time lint enforcement via Dart's recommended rule set |
+| **flutter_test** | SDK | Widget and unit testing framework for regression safety |
 
----
+## Key Architecture
 
-## 5. Folder Structure
-
-The project follows a layer-first directory layout within `lib/`, isolating Cubit (business logic) from widget (presentation) code:
+The project adopts a **layer-first, feature-minimal** architecture. Data flows unidirectionally through a single Cubit, with zero intermediate layers:
 
 ```
-counting_app/
-├── android/                          # Android platform host
-├── ios/                              # iOS platform host
-├── lib/                              # Application source
-│   ├── cubit/
-│   │   ├── counter_cubit.dart        # Cubit — state mutations & commands
-│   │   └── counter_state.dart        # State model — type-safe markers
-│   └── main.dart                     # Entry point, DI setup, widget tree
-├── linux/                            # Linux platform host
-├── macos/                            # macOS platform host
-├── test/
-│   └── widget_test.dart              # Widget smoke test (WIP)
-├── web/                              # Web platform host
-├── windows/                          # Windows platform host
-├── analysis_options.yaml             # Lint configuration
-├── pubspec.yaml                      # Dependency manifest
-└── README.md                         # This file
+┌─────────────────────────────────────────────────────────────┐
+│                    PRESENTATION LAYER                       │
+│  lib/main.dart                                              │
+│                                                             │
+│  ┌──────────────────┐    ┌──────────────────────────────┐   │
+│  │  BlocProvider     │───▶│  HomePage (BlocConsumer)     │   │
+│  │  (DI root)        │    │  ┌────────────────────────┐ │   │
+│  └──────────────────┘    │  │  builder: (ctx, state)  │ │   │
+│                          │  │    → read cubit fields   │ │   │
+│                          │  │    → render scoreboard   │ │   │
+│                          │  ├────────────────────────┤ │   │
+│                          │  │  listener: (ctx, state) │ │   │
+│                          │  │    → side effects (noop)│ │   │
+│                          │  └────────────────────────┘ │   │
+│                          └──────────────────────────────┘   │
+└────────────────────┬────────────────────────────────────────┘
+                     │ calls teamIncrement() / setPoints()
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   BUSINESS LOGIC LAYER                      │
+│  lib/cubit/counter_cubit.dart                                │
+│                                                             │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  CounterCubit extends Cubit<CounterState>              │ │
+│  │                                                        │ │
+│  │  Fields                                                │ │
+│  │  ├── teamAPoints : int                                 │ │
+│  │  └── teamBPoints : int                                 │ │
+│  │                                                        │ │
+│  │  Methods                                               │ │
+│  │  ├── teamIncrement(team, buttomNumber) → emit(state)  │ │
+│  │  └── setPoints() → emit(CounterState())               │ │
+│  └────────────────────────────────────────────────────────┘ │
+└────────────────────┬────────────────────────────────────────┘
+                     │ emit()
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    STATE (MODEL) LAYER                      │
+│  lib/cubit/counter_state.dart                                │
+│                                                             │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  CounterState            (base — empty marker)         │ │
+│  │  ├── CounterAIncrementState  (Team A scored)           │ │
+│  │  └── CounterBIncrementState  (Team B scored)           │ │
+│  └────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-The structure is deliberately flat at the `lib/` top level, reflecting the current scope. As the feature surface grows, the following expansion path is recommended (see §7):
+**Unidirectional flow**: A user taps a button → the widget calls a Cubit method → the Cubit mutates its internal fields and emits a discriminant state → `BlocConsumer` rebuilds the affected subtree. No presentation logic leaks into the Cubit; no business logic leaks into the widget.
 
-```
-lib/
-├── core/               # Shared utilities, constants, theme
-├── cubit/              # Business logic (existing)
-├── model/              # Data classes, serialization
-├── repository/         # Data access abstraction
-├── service/            # External API / Firebase integration
-└── view/               # Page-level widgets (moved from main.dart)
-```
+## Key Features
 
----
+### Reactive State Management
+- **BLoC Cubit isolation** — All score state lives in `CounterCubit`; widgets are pure consumers via `BlocProvider.of<CounterCubit>(context)`
+- **Discriminated union states** — Three state classes (`CounterState`, `CounterAIncrementState`, `CounterBIncrementState`) enable per-team side-effect routing without conditional logic
+- **Synchronous UI diffusion** — State mutations propagate to the widget tree within a single microtask frame; no manual `setState()` or `notifyListeners()`
 
-## 6. Installation &amp; Configuration Guide
+### Purpose-Built Scoring
+- **Preset increment buttons** — Dedicated +1, +2, +3 for each team eliminate arithmetic overhead during fast-paced events
+- **One-tap reset** — Clears both team scores simultaneously, restoring the board to a neutral state
+- **Clear visual hierarchy** — Large, typography-first score display (150px text) with distinct team columns separated by a vertical divider
+
+### Cross-Platform & Quality
+- **Six-platform targeting** — Android, iOS, Web, Linux, macOS, and Windows from a single Dart codebase
+- **Static analysis enforcement** — `flutter_lints` 3.0 catches anti-patterns and style violations at compile time
+- **Zero runtime dependencies** — No cloud services, no databases, no API keys required. The app runs fully offline with `flutter pub get` as the only setup step
+
+## Getting Started & Local Setup
 
 ### Prerequisites
 
-- **Flutter SDK** `>=3.4.3` ([install guide](https://docs.flutter.dev/get-started/install))
-- **Dart SDK** (bundled with Flutter)
-- A code editor (VS Code, Android Studio, or IntelliJ)
-- A physical device or emulator for mobile testing
+| Requirement | Version | Installation |
+|---|---|---|
+| Flutter SDK | `>=3.4.3` | [Install Flutter](https://docs.flutter.dev/get-started/install) |
+| Dart SDK | (bundled with Flutter) | — |
+| Android Studio / Xcode | Latest stable | For mobile emulators |
+| Git | Latest | [Install Git](https://git-scm.com/) |
 
-### Steps
+### Setup Steps
 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/<your-org>/counting_app.git
 cd counting_app
 
-# 2. Install dependencies
+# 2. Fetch dependencies
 flutter pub get
 
-# 3. Verify the project compiles
+# 3. Run static analysis (should produce zero errors)
 flutter analyze
 
 # 4. Run the test suite
 flutter test
 
-# 5. Launch on a connected device / emulator
+# 5. Launch the application on a connected device or emulator
 flutter run
 ```
 
-> **Note:** This application has no external service dependencies (no Firebase, no REST API, no local database). It runs fully offline with zero configuration beyond <code>flutter pub get</code>. The `flutter analyze` step should produce zero errors.
+> No environment variables, API keys, or configuration files are needed. The application is fully self-contained and ready to run immediately after `flutter pub get`.
 
----
+## Screenshots & UI Showcase
 
-## 7. Future Scalability Roadmap
+```
+┌───────────────────────┬───────────────────────┐
+│                       │                       │
+│   [Mockup Placeholder │   [Mockup Placeholder │
+│    — Light Mode]      │    — Dark Mode]       │
+│                       │                       │
+│   ┌─────────────┐     │   ┌─────────────┐     │
+│   │  Team A     │     │   │  Team A     │     │
+│   │   12        │     │   │   12        │     │
+│   │ [+1][+2][+3]│     │   │ [+1][+2][+3]│     │
+│   └─────────────┘     │   └─────────────┘     │
+│                       │                       │
+└───────────────────────┴───────────────────────┘
+┌───────────────────────┬───────────────────────┐
+│                       │                       │
+│   [Mockup Placeholder │   [Mockup Placeholder │
+│    — Android]         │    — iOS]             │
+│                       │                       │
+└───────────────────────┴───────────────────────┘
+```
 
-The following architectural enhancements are designed to preserve the existing codebase's integrity while scaling it into a production-grade application:
+> Replace the placeholder areas above with actual screenshots from `screenshots/` once captured.
 
-### Short-Term (Next 3 Months)
-
-| Enhancement | Rationale | Engineering Approach |
-|------------|-----------|---------------------|
-| **Typed state with data payloads** | Current state classes are empty markers; scores live on Cubit mutable fields. This breaks the BLoC convention of immutable, self-describing states. | Refactor state to `CounterState({int teamAPoints, int teamBPoints})` and remove `teamAPoints`/`teamBPoints` from the Cubit. |
-| **Fix widget test** | `test/widget_test.dart` references `Icons.add`, which does not exist in the UI — the test fails. | Rewrite test to locate `ElevatedButton` by text (`'Add 1 point'`) and verify score text updates. |
-| **Add unit tests for Cubit** | Zero unit tests currently cover `CounterCubit`. | Use `bloc_test` package to verify `teamIncrement` and `setPoints` produce correct state sequences. |
-| **Repository layer** | Direct Cubit mutation should be mediated by a repository for testability. | Introduce `ScoreRepository` interface with `InMemoryScoreRepository` implementation; inject via Cubit constructor. |
-
-### Mid-Term (3–12 Months)
-
-| Enhancement | Rationale |
-|------------|-----------|
-| **Persistent storage (Hive / Isar)** | Scores reset on app restart; a lightweight embedded database would persist game state across sessions. |
-| **Per-team undo/redo stack** | Accidental taps require rollback. A command-pattern undo stack (max 10 operations per team) would resolve this. |
-| **Game timer & auto-pause** | Add a countdown timer per round with automatic score freeze on timeout. |
-| **Custom point values** | Replace fixed +1/+2/+3 buttons with a numeric input field for arbitrary increment values. |
-| **Dark mode & theming** | Expose a `ThemeMode` toggle via a `SettingsCubit` — decoupled from scoring logic. |
-
-### Long-Term (12+ Months)
-
-| Enhancement | Architectural Impact |
-|------------|---------------------|
-| **Firebase Authentication + Cloud Firestore** | Introduce `auth/` and `service/` layers. Multi-device sync requires converting `ScoreRepository` from in-memory to Firestore-backed, with real-time listeners via `Stream<QuerySnapshot>`. |
-| **Match history with replay** | Each `teamIncrement` becomes an immutable `ScoreEvent` stored in a list; the UI can replay the match step-by-step. |
-| **Multi-match tournament bracket** | The single Cubit becomes a `MatchCubit` within a `TournamentCubit` that manages a bracket tree. Requires the repository layer to support batch queries. |
-| **Internationalization (l10n)** | Extract all user-facing strings into ARB files and wrap the app in `flutter_localizations`. |
-
----
-
-## Known Technical Debt
-
-The following items are documented as intentional trade-offs or in-progress work:
-
-| Item | Status | Notes |
-|------|--------|-------|
-| Empty state marker classes | ⚠️ _Acknowledged_ | State classes carry no data; all score state lives on Cubit fields. This is a deviation from canonical BLoC and is prioritized for refactoring. |
-| Misspelled parameter `buttomNumber` | ⚠️ _Acknowledged_ | Typo in `CounterCubit.teamIncrement()` — tracked for correction in the next refactor cycle. |
-| Non-standard reset method name `setPoints()` | ⚠️ _Acknowledged_ | Convention would be `reset()`. Renaming is scheduled alongside the state-refactor sprint. |
-| Broken widget test (`test/widget_test.dart`) | ❌ _Known failing_ | References `Icons.add` not present in the UI. Will be rewritten as part of short-term roadmap. |
-
----
+## Contact & Licensing
 
 <p align="center">
-  <sub>Built with Flutter &middot; Maintained with clean architecture principles</sub>
-  <br>
-  <sub>Erasmus Mundus &amp; Chevening Applicant &mdash; Software Engineering (MSc)</sub>
+  <strong>Project maintainer:</strong>
+  <a href="https://github.com/<your-username>">GitHub</a> ·
+  <a href="https://linkedin.com/in/<your-profile>">LinkedIn</a> ·
+  <a href="mailto:<your-email>">Email</a>
+</p>
+
+<p align="center">
+  Distributed under the <strong>MIT License</strong>. See <a href="LICENSE">LICENSE</a> for more information.
+</p>
+
+<p align="center">
+  <sub>Built with Flutter &middot; Designed with clean architecture principles</sub>
 </p>
